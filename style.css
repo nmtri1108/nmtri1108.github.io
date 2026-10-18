@@ -1,0 +1,810 @@
+/* =========================================================
+   Nguyễn Minh Trí · Portfolio
+   Ý tưởng: trang giới thiệu dựng như một trang sản phẩm trên sàn.
+   Muốn đổi màu hay font cho cả trang, chỉ cần sửa trong :root.
+   ========================================================= */
+
+:root {
+  --ink: #172A46;        /* xanh navy: chữ chính, nền khối liên hệ */
+  --muted: #56677E;      /* chữ phụ */
+  --line: #D5DDE7;       /* đường kẻ, viền */
+  --line-2: #C3CEDB;     /* đường kẻ đậm hơn */
+  --canvas: #EEF2F6;     /* nền trang */
+  --paper: #FFFFFF;      /* nền khối nội dung */
+  --sale: #D61F49;       /* đỏ "giá": con số chính, nút chính */
+  --sale-deep: #B5153A;  /* đỏ khi rê chuột */
+  --sale-tint: #FFF0F3;  /* nền khối "giá" */
+  --sale-soft: #FF6B86;  /* đỏ dùng trên nền navy */
+  --stock: #0B7A55;      /* xanh "còn hàng": trạng thái */
+  --stock-dot: #12B886;
+  --on-dark: #C7D2E0;    /* chữ phụ trên nền navy */
+
+  --font: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --wrap: 1240px;
+  --r-lg: 20px;
+  --r: 12px;
+
+  color-scheme: light;
+}
+
+/* ---------- Nền tảng ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+
+:focus-visible { outline: 3px solid var(--sale); outline-offset: 3px; border-radius: 4px; }
+
+.wrap { width: min(100% - 32px, var(--wrap)); margin-inline: auto; }
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+svg.i {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.skip {
+  position: absolute;
+  top: -100px;
+  left: 16px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.skip:focus { top: 12px; }
+
+/* ---------- Thanh trên cùng ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, .95);
+  border-bottom: 1px solid var(--line);
+}
+@supports (backdrop-filter: blur(8px)) {
+  .topbar { background: rgba(255, 255, 255, .82); backdrop-filter: saturate(1.6) blur(12px); }
+}
+
+.topbar-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-stretch: 75%;
+  text-decoration: none;
+}
+.brand svg { width: 28px; height: 28px; }
+.brand path { fill: var(--sale); }
+.brand circle { fill: var(--paper); }
+
+.menu { display: flex; gap: 4px; }
+.menu a {
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: .9375rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.menu a:hover { background: var(--canvas); color: var(--ink); }
+
+/* ---------- Nút ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, background-color .15s, border-color .15s;
+}
+.btn-sale { background: var(--sale); color: #fff; }
+.btn-sale:hover { background: var(--sale-deep); }
+.btn-line { background: var(--paper); color: var(--ink); border-color: var(--line-2); }
+.btn-line:hover { border-color: var(--ink); }
+
+/* =========================================================
+   Trang "sản phẩm"
+   ========================================================= */
+.pdp { padding-top: 24px; }
+
+.pdp-card {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr) 280px;
+  grid-template-areas: "photo info buy";
+  align-items: start;
+  gap: 40px;
+  padding: 32px;
+  border-radius: var(--r-lg);
+  background: var(--paper);
+}
+
+.gallery { grid-area: photo; overflow: hidden; border-radius: 14px; background: #E9ECEF; }
+.gallery img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+
+.listing { grid-area: info; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 999px;
+  background: var(--sale-tint);
+  color: var(--sale);
+  font-size: .875rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.badge .i { width: 18px; height: 18px; }
+
+.name {
+  margin-top: 14px;
+  font-size: clamp(2.75rem, 1.9rem + 2.6vw, 4rem);
+  font-weight: 800;
+  font-stretch: 62.5%;
+  line-height: 1.05;
+  letter-spacing: -.005em;
+  text-wrap: balance;
+}
+
+.title {
+  max-width: 52ch;
+  margin-top: 10px;
+  font-size: 1.1875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* vạch ngăn nằm bên trái mỗi mục; vạch ở đầu dòng bị cắt đi nên xuống hàng vẫn gọn */
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  margin: 14px 0 0 -12px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .9375rem;
+}
+.facts li {
+  margin-left: -1px;
+  padding: 0 12px 0 13px;
+  background: linear-gradient(var(--line-2), var(--line-2)) 0 50% / 1px 14px no-repeat;
+}
+
+/* Khối "giá": doanh thu đặt ở vị trí nổi nhất, như giá trên trang sản phẩm */
+.price {
+  margin-top: 22px;
+  padding: 16px 20px 18px;
+  border-radius: var(--r);
+  background: var(--sale-tint);
+}
+.price-figure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 10px;
+  color: var(--sale);
+  line-height: 1;
+}
+.amt {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(3rem, 2.3rem + 2.4vw, 4.25rem);
+  font-weight: 800;
+  font-stretch: 62.5%;
+  letter-spacing: -.01em;
+}
+.unit { font-size: 1.25rem; font-weight: 700; font-stretch: 75%; }
+.price-note { margin-top: 8px; font-size: .9375rem; }
+
+/* Ô "phân loại": chọn vị trí ứng tuyển */
+.variant { min-width: 0; margin: 22px 0 0; padding: 0; border: 0; }
+.variant legend { margin-bottom: 10px; padding: 0; color: var(--muted); font-size: .9375rem; }
+.variant-opts { display: flex; flex-wrap: wrap; gap: 10px; }
+.variant input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.variant label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 18px;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--paper);
+  font-weight: 600;
+  cursor: pointer;
+}
+.variant label:hover { border-color: var(--ink); }
+.variant input:checked + label {
+  border-color: var(--sale);
+  box-shadow: inset 0 0 0 1px var(--sale);
+  color: var(--sale);
+}
+/* góc tam giác có dấu tích, giống ô phân loại đang chọn trên sàn */
+.variant input:checked + label::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, transparent 50%, var(--sale) 50%);
+}
+.variant input:checked + label::before {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 6px;
+  z-index: 1;
+  width: 7px;
+  height: 4px;
+  border: solid #fff;
+  border-width: 0 0 2px 2px;
+  transform: rotate(-45deg);
+}
+.variant input:focus-visible + label { outline: 3px solid var(--sale); outline-offset: 2px; }
+
+.perks-h { margin-top: 26px; font-size: 1.125rem; font-weight: 700; font-stretch: 87.5%; }
+.perks { display: grid; gap: 10px; max-width: 68ch; margin-top: 10px; }
+.perks li { position: relative; padding-left: 20px; }
+.perks li::before {
+  content: "";
+  position: absolute;
+  top: .62em;
+  left: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.perks b { font-weight: 700; }
+
+/* Đổi nội dung theo vị trí đang chọn */
+.pdp [data-role="dm"] { display: none; }
+.pdp:has(#role-dm:checked) [data-role="ops"] { display: none; }
+.pdp:has(#role-dm:checked) .title[data-role="dm"] { display: block; }
+.pdp:has(#role-dm:checked) .perks[data-role="dm"] { display: grid; }
+.pdp .title[data-role] { animation: swap .28s ease-out; }
+@keyframes swap { from { opacity: 0; transform: translateY(4px); } }
+@supports not selector(:has(*)) { .variant { display: none; } }
+
+/* Khung liên hệ nhanh (vị trí "mua hàng") */
+.buybox {
+  grid-area: buy;
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.stock { display: flex; align-items: center; gap: 10px; color: var(--stock); font-weight: 700; }
+.stock .dot {
+  position: relative;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--stock-dot);
+}
+.stock .dot::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 2px solid var(--stock-dot);
+  border-radius: 50%;
+  opacity: 0;
+  animation: ping 2.4s cubic-bezier(.2, .6, .3, 1) infinite;
+}
+@keyframes ping {
+  0% { transform: scale(.6); opacity: .7; }
+  80%, 100% { transform: scale(1.5); opacity: 0; }
+}
+.now { margin-bottom: 4px; color: var(--muted); font-size: .9375rem; }
+.buy-meta {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: .9375rem;
+}
+.buy-meta dt { color: var(--muted); font-size: .8125rem; }
+.buy-meta dd { font-weight: 600; overflow-wrap: anywhere; }
+
+/* =========================================================
+   Tiêu đề khu vực
+   ========================================================= */
+.section-h {
+  font-size: clamp(1.75rem, 1.35rem + 1.6vw, 2.5rem);
+  font-weight: 800;
+  font-stretch: 75%;
+  line-height: 1.1;
+  letter-spacing: -.005em;
+}
+
+/* ---------- Kỹ năng: bảng thông số ---------- */
+.specs { padding-top: 24px; }
+.specs-card { padding: 32px 32px 20px; border-radius: var(--r-lg); background: var(--paper); }
+.spec {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 48px;
+  margin-top: 18px;
+}
+.spec div {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.spec dt { color: var(--muted); font-weight: 600; }
+.spec dd { font-weight: 500; }
+
+/* ---------- Hành trình: dạng theo dõi đơn hàng ---------- */
+.journey { padding: 64px 0 72px; }
+.track { margin-top: 32px; }
+
+.stop {
+  position: relative;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  column-gap: 64px;
+  padding-bottom: 44px;
+}
+.stop.is-plan { padding-bottom: 28px; }
+.stop:last-child { padding-bottom: 0; }
+
+/* đường nối giữa các mốc */
+.stop::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: -14px;
+  left: 181px;
+  width: 2px;
+  background: var(--line-2);
+}
+.stop.is-plan::before { background: repeating-linear-gradient(to bottom, #9AA9BC 0 5px, transparent 5px 10px); }
+.stop:last-child::before { content: none; }
+
+/* chấm mốc */
+.stop::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 174px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #8C9CB1;
+  border-radius: 50%;
+  background: var(--canvas);
+}
+.stop.is-plan::after { border-style: dashed; }
+.stop.is-now::after {
+  border-color: var(--stock-dot);
+  background: var(--stock-dot);
+  box-shadow: 0 0 0 5px rgba(18, 184, 134, .2);
+}
+
+.when { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.term { font-size: 1.0625rem; font-weight: 700; font-stretch: 75%; line-height: 1.6; white-space: nowrap; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 10px;
+  border-radius: 999px;
+  font-size: .8125rem;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.chip-now { background: #DDF3EA; color: var(--stock); }
+.chip-plan { border: 1px dashed #9AA9BC; color: var(--muted); }
+
+.what h3 { font-size: 1.375rem; font-weight: 700; font-stretch: 87.5%; line-height: 1.3; text-wrap: balance; }
+.is-plan .what h3 { font-size: 1.1875rem; font-weight: 600; }
+.role { margin-top: 4px; color: var(--muted); font-weight: 600; }
+
+.duties { display: grid; gap: 8px; max-width: 70ch; margin-top: 14px; }
+.duties li { position: relative; padding-left: 20px; }
+.duties li::before {
+  content: "";
+  position: absolute;
+  top: .68em;
+  left: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8C9CB1;
+}
+
+.wins {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 780px;
+  margin-top: 20px;
+}
+.wins li {
+  padding: 14px 18px 16px;
+  border-top: 3px solid var(--sale);
+  border-radius: var(--r);
+  background: var(--paper);
+}
+.wins strong {
+  display: block;
+  color: var(--sale);
+  font-size: 2rem;
+  font-weight: 800;
+  font-stretch: 62.5%;
+  line-height: 1.1;
+}
+.wins span { display: block; margin-top: 6px; font-size: .9375rem; line-height: 1.45; }
+
+/* ---------- Liên hệ ---------- */
+.contact { padding: 72px 0 0; background: var(--ink); color: #fff; }
+.contact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 48px;
+}
+.contact-h {
+  font-size: clamp(2.5rem, 1.7rem + 3vw, 4rem);
+  font-weight: 800;
+  font-stretch: 62.5%;
+  line-height: 1.02;
+  letter-spacing: -.005em;
+}
+.contact-lead { max-width: 54ch; margin-top: 14px; color: var(--on-dark); }
+.contact-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.contact .btn-sale { background: var(--sale-soft); color: var(--ink); }
+.contact .btn-sale:hover { background: #FF8AA0; }
+.contact .btn-line { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .32); }
+.contact .btn-line:hover { border-color: #fff; }
+.contact :focus-visible { outline-color: var(--sale-soft); }
+
+.contact-list { display: flex; flex-wrap: wrap; gap: 16px 44px; margin-top: 32px; }
+.contact-list dt { color: #9FB0C6; font-size: .8125rem; }
+.contact-list dd { font-weight: 600; overflow-wrap: anywhere; }
+
+.qr {
+  width: 208px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.qr img { width: 176px; height: 176px; }
+.qr figcaption { margin-top: 10px; font-size: .8125rem; line-height: 1.45; text-align: center; }
+
+.site-foot { padding: 56px 0 28px; background: var(--ink); color: #9FB0C6; font-size: .875rem; }
+.site-foot .wrap { padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, .14); }
+
+/* Thanh liên hệ dưới đáy: chỉ hiện trên điện thoại */
+.actionbar { display: none; }
+
+/* Màn hình lớn: ảnh và khung liên hệ đi theo khi cuộn phần thông tin */
+@media (min-width: 1200px) {
+  .gallery, .buybox { position: sticky; top: 88px; }
+}
+
+/* =========================================================
+   Màn hình vừa: ảnh + liên hệ bên trái, thông tin bên phải
+   ========================================================= */
+@media (max-width: 1199px) {
+  .pdp-card {
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "photo info" "buy info";
+    gap: 24px 40px;
+  }
+  .buybox { align-self: start; }
+}
+
+@media (max-width: 899px) {
+  .pdp-card { grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 20px 28px; padding: 24px; }
+  .spec { grid-template-columns: minmax(0, 1fr); }
+  .stop { grid-template-columns: 120px minmax(0, 1fr); column-gap: 48px; }
+  .stop::before { left: 143px; }
+  .stop::after { left: 136px; }
+  .wins { grid-template-columns: minmax(0, 1fr); max-width: 420px; }
+}
+
+/* =========================================================
+   Điện thoại
+   ========================================================= */
+@media (max-width: 759px) {
+  .menu { display: none; }
+
+  .pdp { padding-top: 0; }
+  .pdp .wrap, .specs .wrap { width: 100%; }
+  .pdp-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: "photo" "info" "buy";
+    gap: 24px;
+    padding: 16px 16px 24px;
+    border-radius: 0;
+  }
+  .gallery img { aspect-ratio: 6 / 5; object-position: 50% 22%; }
+  .title { font-size: 1.125rem; }
+  .variant-opts { display: grid; grid-template-columns: 1fr 1fr; }
+  .variant label { justify-content: center; padding: 8px 10px; font-size: .9375rem; text-align: center; }
+
+  .specs { padding-top: 10px; }
+  .specs-card { padding: 24px 16px 12px; border-radius: 0; }
+  .spec div { grid-template-columns: 108px minmax(0, 1fr); gap: 12px; }
+
+  .journey { padding: 48px 0 56px; }
+  .stop { grid-template-columns: minmax(0, 1fr); row-gap: 6px; padding-left: 32px; }
+  .stop::before { left: 7px; }
+  .stop::after { left: 0; }
+  .when { flex-direction: row; align-items: center; gap: 10px; }
+
+  .contact { padding-top: 56px; }
+  .contact-grid { grid-template-columns: minmax(0, 1fr); }
+  .contact-actions .btn { flex: 1 1 100%; }
+  .qr { display: none; }
+
+  .site-foot { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+
+  .actionbar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.7fr;
+    gap: 8px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+    background: var(--paper);
+    box-shadow: 0 -6px 18px rgba(23, 42, 70, .06);
+  }
+  .actionbar a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 52px;
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: .75rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .actionbar .i { width: 22px; height: 22px; }
+  .actionbar .ab-main { flex-direction: row; gap: 8px; background: var(--sale); color: #fff; font-size: 1rem; font-weight: 700; }
+}
+
+/* =========================================================
+   HIỆU ỨNG
+   Muốn bỏ hiệu ứng nào thì xoá khối tương ứng bên dưới.
+   Máy bật chế độ "giảm chuyển động" sẽ tự tắt toàn bộ hiệu ứng.
+   ========================================================= */
+
+/* 1. Mở trang: ảnh "tải" từ trên xuống, thông tin hiện ra lần lượt */
+.gallery { animation: unveil .9s cubic-bezier(.65, 0, .35, 1) backwards; }
+.gallery img { animation: settle 1.4s cubic-bezier(.2, .7, .2, 1) backwards; }
+.listing > * {
+  animation: rise .7s cubic-bezier(.2, .7, .2, 1) backwards;
+  animation-delay: calc(.15s + var(--i, 0) * 70ms);
+}
+.badge { --i: 0; }
+.name { --i: 1; }
+.pitch { --i: 2; }
+.facts { --i: 3; }
+.price { --i: 4; }
+.variant { --i: 5; }
+.perks-wrap { --i: 6; }
+.buybox { animation: slide-in .7s .55s cubic-bezier(.2, .7, .2, 1) backwards; }
+
+@keyframes unveil {
+  from { clip-path: inset(0 0 100% 0 round 14px); }
+  to { clip-path: inset(0 0 0 0 round 14px); }
+}
+@keyframes settle { from { transform: scale(1.12); } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes slide-in { from { opacity: 0; transform: translateX(18px); } }
+
+/* Huy hiệu Top 3: một vệt sáng lướt qua sau khi trang mở xong */
+.badge { position: relative; overflow: hidden; }
+.badge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .85) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: sheen 1.1s 1.5s ease-in-out forwards;
+  pointer-events: none;
+}
+@keyframes sheen { to { transform: translateX(120%); } }
+
+/* 2. Rê chuột lên ảnh để phóng to theo con trỏ, như ảnh sản phẩm trên sàn */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .gallery { cursor: zoom-in; }
+  .gallery img {
+    transform-origin: var(--zx, 50%) var(--zy, 35%);
+    transition: transform .45s cubic-bezier(.2, .7, .2, 1);
+  }
+  .gallery:hover img { transform: scale(1.35); }
+}
+
+/* 3. Nút: nhấc nhẹ khi rê chuột; nút chính có vệt sáng lướt qua */
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0) scale(.98); }
+.btn-sale { position: relative; overflow: hidden; }
+.btn-sale::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .38) 50%, transparent 65%);
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+.btn-sale:hover::after { transform: translateX(110%); transition: transform .7s cubic-bezier(.2, .7, .2, 1); }
+.btn-sale:hover { box-shadow: 0 12px 24px -12px rgba(214, 31, 73, .7); }
+.contact .btn-sale:hover { box-shadow: 0 12px 24px -12px rgba(255, 107, 134, .65); }
+
+/* 4. Ô phân loại: góc tích bật ra khi chọn, điểm mạnh hiện lần lượt */
+.variant label { transition: border-color .15s, color .15s, box-shadow .15s, transform .15s; }
+.variant label:active { transform: scale(.97); }
+.variant input:checked + label::after {
+  transform-origin: 100% 100%;
+  animation: corner .3s cubic-bezier(.3, 1.5, .5, 1) backwards;
+}
+.variant input:checked + label::before { animation: fade .2s .12s backwards; }
+.perks li { animation: swap .35s ease-out backwards; animation-delay: calc(var(--n, 0) * 45ms); }
+.perks li:nth-child(2) { --n: 1; }
+.perks li:nth-child(3) { --n: 2; }
+.perks li:nth-child(4) { --n: 3; }
+.perks li:nth-child(5) { --n: 4; }
+@keyframes corner { from { transform: scale(0); } }
+@keyframes fade { from { opacity: 0; } }
+
+/* 5. Thanh trên cùng đổ bóng khi bắt đầu cuộn (script.js) */
+.topbar { transition: box-shadow .25s; }
+.topbar.is-scrolled { box-shadow: 0 8px 24px -16px rgba(23, 42, 70, .35); }
+
+/* 6. Hiện dần khi cuộn tới (script.js gắn lớp .motion-ok cho trang) */
+.motion-ok [data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .7s cubic-bezier(.2, .7, .2, 1), transform .7s cubic-bezier(.2, .7, .2, 1);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+.motion-ok [data-reveal].is-in { opacity: 1; transform: none; }
+
+/* Hành trình: chấm mốc "check-in", rồi đường nối chạy xuống mốc tiếp theo */
+.motion-ok .stop[data-reveal]::after {
+  transform: scale(0);
+  transition: transform .45s .15s cubic-bezier(.3, 1.6, .5, 1);
+}
+.motion-ok .stop[data-reveal].is-in::after { transform: scale(1); }
+.motion-ok .stop[data-reveal]::before {
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform .9s .35s cubic-bezier(.2, .7, .2, 1);
+}
+.motion-ok .stop[data-reveal].is-in::before { transform: scaleY(1); }
+
+/* 7. Mã QR: vạch quét lướt qua khi cuộn tới, và khi rê chuột lên */
+.qr { position: relative; }
+.scan {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 176px;
+  height: 176px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.scan::before, .scan::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--sale);
+  box-shadow: 0 0 10px 2px rgba(214, 31, 73, .5);
+  opacity: 0;
+}
+.motion-ok .qr.is-in .scan::before { animation: scan 1.8s .6s ease-in-out 2; }
+.qr:hover .scan::after { animation: scan 1.8s ease-in-out infinite; }
+@keyframes scan {
+  0% { opacity: 0; transform: translateY(0); }
+  12%, 88% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(174px); }
+}
+
+/* 8. Thanh liên hệ trên điện thoại trượt lên sau khi trang mở */
+@media (max-width: 759px) {
+  .actionbar { animation: bar-up .5s .9s cubic-bezier(.2, .7, .2, 1) backwards; }
+}
+@keyframes bar-up { from { transform: translateY(110%); } }
+
+/* ---------- Người dùng tắt chuyển động ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- In ra giấy ---------- */
+@media print {
+  .topbar, .actionbar, .variant, .qr, .skip { display: none; }
+  body { background: #fff; }
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+  .contact, .site-foot { background: none; color: var(--ink); }
+}
